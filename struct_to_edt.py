@@ -114,7 +114,7 @@ def edt_func(func, edt='edt'):
         result += '\n'
         result += 'Argument: ' + arg.name + '\n'
         if arg.inout:
-            result += '  ' + arg.inout + ':'
+            result += '  ' + arg.inout.upper() + ':'
             # Align the Argument part with the variable on the line above
             result += ' ' * (len('Argument') - len(arg.inout) - 3)
         result += '  ' + arg.comment + '\n'
