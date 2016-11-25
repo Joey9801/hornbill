@@ -80,6 +80,7 @@ def edt_to_comment(in_str, length=80):
 
     return result_str
 
+
 def edt_func(func, edt='edt'):
     """
     Creates an EDT from a function description object.
