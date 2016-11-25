@@ -5,6 +5,7 @@ import json
 import linecache
 import tempfile
 
+import struct_to_edt
 import clang.cindex
 from clang.cindex import CursorKind
 
@@ -125,4 +126,4 @@ def parse_func(filename, line_number):
 if __name__ == "__main__":
     func = parse_func(sys.argv[1], int(sys.argv[2]))
 
-    print(func)
+    print(struct_to_edt.edt_func(func))
