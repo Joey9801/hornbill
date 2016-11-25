@@ -1,16 +1,16 @@
 #!python-venv/bin/python
 
-import code
-
+import re
 import sys
 import json
-import linecache
 import tempfile
-import re
+import linecache
 
-import struct_to_edt
 import clang.cindex
 from clang.cindex import CursorKind
+
+import struct_to_edt
+
 
 class Location(object):
     def __init__(self, filename = "", linenumber = ""):
@@ -23,6 +23,7 @@ class Location(object):
     def dictify(self):
         return {"filename": self.filename,
                 "line"    : self.linenumber}
+
 
 class Variable(object):
     def __init__(self, typename = "", name = "", comment = ""):
@@ -45,6 +46,7 @@ class Variable(object):
             return {"name"   : self.name,
                     "type"   : self.typename,
                     "comment": self.comment}
+
 
 class Function(object):
     def __init__(self, clang_node = None):
@@ -123,6 +125,7 @@ def parse_temp_stubbed(temp_filename):
         if node.kind == CursorKind.FUNCTION_DECL:
             return Function(node)
 
+
 def parse_func(filename, line_number):
     """
     Given a filename and a line number for a single function
@@ -145,6 +148,7 @@ def parse_func(filename, line_number):
     func = parse_temp_stubbed("/tmp/hornbill_tmp.c")
 
     return func
+
 
 if __name__ == "__main__":
     func = parse_func(sys.argv[1], int(sys.argv[2]))
