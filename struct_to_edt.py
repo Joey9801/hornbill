@@ -1,11 +1,11 @@
-#!python-venv/bin/python
+#!/usr/bin/env/python3
 
 from __future__ import print_function
 
 from collections import namedtuple
 
 
-def edt(func):
+def edt_func(func):
     """
     Creates an EDT from a function description object.
 
@@ -33,6 +33,7 @@ def edt(func):
         result += '  ' + arg.comment + '\n'
 
     return result
+
 
 if __name__ == '__main__':
     print("Testing edt function...")
@@ -66,5 +67,5 @@ Argument: frying
 Argument: style
   Type of egg.
 """
-    assert(edt(func) == reference)
+    assert(edt_func(func) == reference)
     print('Testing passed.')
