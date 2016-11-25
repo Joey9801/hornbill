@@ -208,6 +208,8 @@ def test_edt_to_comment():
     """
     assert(edt_to_comment(_reference_edt) == _reference_comment)
 
+def gen_edt(func):
+    return edt_to_comment(edt_func(func))
 
 if __name__ == '__main__':
     test_indent()

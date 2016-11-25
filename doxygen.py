@@ -14,7 +14,7 @@ def gen_doxygen(func):
 
     for arg in func.args:
         lines.append(" *")
-        lines.append(" * @param[{}] {}".format(arg.inout, arg.name))
+        lines.append(" * @param[{}] {} ({})".format(arg.inout, arg.name, arg.typename))
         lines.append(" *              {}".format(arg.comment))
 
     lines.append(" *")

@@ -1,4 +1,4 @@
-#!python-venv/bin/python
+#!/home/joe/Documents/independence_day/hornbill/python-venv/bin/python
 
 import code
 
@@ -8,7 +8,7 @@ import linecache
 import tempfile
 import re
 
-import struct_to_edt
+from edt import gen_edt
 from doxygen import gen_doxygen
 import clang.cindex
 from clang.cindex import CursorKind
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     func = parse_func(sys.argv[2], int(sys.argv[3]))
 
     if sys.argv[1] == "edt":
-        print(struct_to_edt.edt_func(func))
+        print(gen_edt(func))
 
     elif sys.argv[1] == "doxygen":
         print(gen_doxygen(func))
