@@ -20,10 +20,26 @@ def wrap_single_line(line, length=80, indent_len=4, already_indented=False):
     if len(line) <= length:
         return [line]
 
-    current_indent = len(line) - len(line.lstrip())
-    result = [line[:length]]
+    # Slice the line if it's too long, based on the previous whitespace
+    if line[length-1].isspace():
+        before_whitespace = line[:length-1].rsplit(' ', 1)[0]
+        if before_whitespace.isspace():
+            # If we're only typing spaces, there's no point trying to break at a
+            # sane place, so just break at the end
+            last_whitespace = length
+        else:
+            last_whitespace = len(before_whitespace)
+    else:
+        last_whitespace = length
 
-    remaining = (' ' * current_indent) + line[length:]
+    # We can be sure that up to last_whitespace should definitely be on the
+    # first line.
+    result = [line[:last_whitespace]]
+
+    # To wrap the remaining string, we should indent on the front
+    current_indent = len(line) - len(line.lstrip())
+    remaining = (' ' * current_indent) + line[last_whitespace:].lstrip()
+
     if not already_indented:
         remaining = (' ' * indent_len) + remaining
 
@@ -48,11 +64,19 @@ def edt_to_comment(in_str, length=80):
     lines = [line for linelist in lines for line in linelist]
 
     # Add comment marks
-    lines = [' * ' + line for line in in_str.split('\n')]
+    # If a line is nonempty, we want it to start with ' * ';
+    # otherwise we want it to start with [and be] ' *'.
+    # int(bool(.)) takes the integer and outputs 0 if it's 0, and 1 otherwise.
+    lines = [' *' + ' '* int(bool(len(line))) + line for line in lines]
     lines = ['/*'] + lines
 
     result_str = '\n'.join(lines)
-    result_str += '\n */'
+    # Add the closing comment mark, which means replacing the final space 
+    # with a slash
+    # Python has immutable strings which is here annoying
+    result_list = list(result_str)
+    result_list[-1] = '*/'
+    result_str = ''.join(result_list)
 
     return result_str
 
@@ -125,7 +149,7 @@ _reference_edt = """edt: * function fry
 Fry some eggs.
 
 Return: cerrno
-  Whether we fried the eggs.
+  Whether we fried the eggs. This line is very, very, very, very, very, very, very, very long.
 
 Argument: frying
   IN:     How many to fry.
@@ -140,7 +164,8 @@ _reference_comment = """/*
  * Fry some eggs.
  *
  * Return: cerrno
- *   Whether we fried the eggs.
+ *   Whether we fried the eggs. This line is very, very, very, very, very, very,
+ *       very, very long.
  *
  * Argument: frying
  *   IN:     How many to fry.
@@ -169,7 +194,9 @@ def test_edt():
                comment='Type of egg.',
                inout='INOUT')
     func.args = [arg1, arg2]
-    func.returns = arg(typename='cerrno', comment='Whether we fried the eggs.',
+    func.returns = arg(typename='cerrno',
+                       comment='Whether we fried the eggs. This line is very, '\
+                               'very, very, very, very, very, very, very long.',
                        name=None, inout=None)
 
     assert(edt_func(func) == _reference_edt)
@@ -179,10 +206,6 @@ def test_edt_to_comment():
     """
     Test the edt_to_comment function.
     """
-    print("Reference:")
-    print(_reference_comment)
-    print("EDT to comment:")
-    print(edt_to_comment(_reference_edt))
     assert(edt_to_comment(_reference_edt) == _reference_comment)
 
 
