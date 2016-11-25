@@ -9,6 +9,7 @@ import tempfile
 import re
 
 import struct_to_edt
+from doxygen import gen_doxygen
 import clang.cindex
 from clang.cindex import CursorKind
 
@@ -25,10 +26,11 @@ class Location(object):
                 "line"    : self.linenumber}
 
 class Variable(object):
-    def __init__(self, typename = "", name = "", comment = ""):
+    def __init__(self, typename = "", name = "", comment = "<Placeholder comment>"):
         self.typename = typename
         self.name     = name
         self.comment  = comment
+        self.inout    = "in"
 
     def __str__(self):
         if self.name == "<return>":
@@ -59,7 +61,7 @@ class Function(object):
                                        name     = x.spelling)
                               for x in clang_node.get_arguments() ]
 
-            self.comment  = clang_node.raw_comment
+            self.comment  = "<Placeholder comment>"
 
     def __str__(self):
         string = ""
@@ -147,6 +149,10 @@ def parse_func(filename, line_number):
     return func
 
 if __name__ == "__main__":
-    func = parse_func(sys.argv[1], int(sys.argv[2]))
+    func = parse_func(sys.argv[2], int(sys.argv[3]))
 
-    print(struct_to_edt.edt_func(func))
+    if sys.argv[1] == "edt":
+        print(struct_to_edt.edt_func(func))
+
+    elif sys.argv[1] == "doxygen":
+        print(gen_doxygen(func))
