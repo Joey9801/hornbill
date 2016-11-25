@@ -1,9 +1,12 @@
 #!python-venv/bin/python
 
+import code
+
 import sys
 import json
 import linecache
 import tempfile
+import re
 
 import clang.cindex
 from clang.cindex import CursorKind
@@ -47,10 +50,10 @@ class Function(object):
         if clang_node is not None:
             self.location = Location(clang_node.location.file.name,
                                      clang_node.location.line)
-            self.name     = clang_node.displayname
-            self.name     = self.name[0:self.name.find("(")]
+            self.name     = clang_node.spelling
             self.returns  = Variable(typename = clang_node.result_type.spelling,
                                      name     = "<return>")
+
             self.args     = [ Variable(typename = x.type.spelling,
                                        name     = x.spelling)
                               for x in clang_node.get_arguments() ]
@@ -83,21 +86,41 @@ def parse_temp_stubbed(temp_filename):
     Function object
     """
 
-    print(temp_filename)
-
-    with open(temp_filename) as f:
-        print(f.readlines())
-
     clang.cindex.Config.set_library_file('/usr/lib/llvm-3.8/lib/libclang.so.1')
     index = clang.cindex.Index.create()
 
-    translation_unit = index.parse(temp_filename, ['-x', 'c', '-fsyntax-only'])
-    root_nodes = translation_unit.cursor.get_children()
+    translation_unit = index.parse(temp_filename, ['-x', 'c'])
 
-    for x in root_nodes:
-        print(x)
-        if x.kind == CursorKind.FUNCTION_DECL:
-            return Function(x)
+    # First clear up any errors of the form
+    #   "unknown type name 'foo_t'"
+    # We do this by adding fake types with lines like
+    #   "typedef struct {} foo_t"
+    # If we do not do this, the unknown types are substited with int's in the
+    # AST, which is not what we want
+
+    unknown_types = []
+    for d in translation_unit.diagnostics:
+        if d.severity == 3:
+            quoted = re.compile("'([^']*)'")
+            for value in quoted.findall(d.spelling):
+                unknown_types.append(value)
+
+    if len(unknown_types) > 0:
+        unknown_typedefs = ["typedef int {};".format(x) for x in unknown_types]
+
+        with open(temp_filename) as f:
+            lines = f.readlines()
+
+        with open(temp_filename, 'w') as f:
+            f.writelines(unknown_typedefs)
+            f.writelines(lines)
+
+        translation_unit = index.parse(temp_filename, ['-x', 'c'])
+
+    root_nodes = translation_unit.cursor.get_children()
+    for node in root_nodes:
+        if node.kind == CursorKind.FUNCTION_DECL:
+            return Function(node)
 
 def parse_func(filename, line_number):
     """
@@ -110,11 +133,11 @@ def parse_func(filename, line_number):
     if "(" in lines[1]:
         i = 1
         while ")" not in lines[-1]:
-            lines.extend(linecache.getline(filename, line_number + 1))
+            lines.append(linecache.getline(filename, line_number + i))
+            i = i + 1
 
     lines.extend(";")
 
-    print(lines)
     with open("/tmp/hornbill_tmp.c", 'w') as f:
         f.writelines(lines)
 
