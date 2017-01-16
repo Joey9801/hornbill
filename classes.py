@@ -1,6 +1,8 @@
 import enum
 from collections import namedtuple
 
+from copy import deepcopy
+
 Location = namedtuple("Location", ["filename", "linenumber"])
 
 
@@ -110,18 +112,15 @@ class Function(object):
         ret = True
         if self.location and other.location:
             if self.location != other.location:
-                print "loc"
                 ret = False
         if self.name and other.name:
             if self.name != other.name:
-                print "name"
                 ret = False
         if self.returns and other.returns:
-            if self.returns != other.returns:
-                print "returns"
+            if not self.returns == other.returns:
                 ret = False
         if self.args and other.args:
-            missing_args = other.args
+            missing_args = deepcopy(other.args)
             for arg in self.args:
                 found = False
                 for barg in missing_args:
@@ -130,7 +129,6 @@ class Function(object):
                         missing_args.remove(barg)
                         break
                 if not found:
-                    print "arg"
                     ret = False
         return ret
 

@@ -95,7 +95,7 @@ def compare(functions):
     for f in functions:
         c = f[0]
         d = f[1]
-        if c != d:
+        if c is None or d is None or not c == d:
             print("Mismatch between function and docstring")
             print("Function:")
             print(c)
