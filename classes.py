@@ -94,7 +94,9 @@ class Function(object):
             self.returns = None
             self.args = []
 
-        self.comment  = "<Placeholder comment>"
+        self.comment = VerbatimComment(comment=["<Placeholder here>"],
+                                       start_loc=-1,
+                                       end_loc=-1)
 
     def __str__(self):
         string = ""
