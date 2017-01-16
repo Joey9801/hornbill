@@ -12,6 +12,13 @@ func2 (char a,
 struct thing
 func3 (int a);
 
+foo_t
+func4 (char a,
+char*b, char **c,
+       char * *d, char    *  *   e,
+          const char *f,
+            const char * const * g, char const * h);
+
 int
 main (void)
 {

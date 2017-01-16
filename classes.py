@@ -50,7 +50,7 @@ class Function(object):
                                        name     = x.spelling)
                               for x in clang_node.get_arguments() ]
 
-            self.comment  = "<Placeholder comment>"
+        self.comment  = "<Placeholder comment>"
 
     def __str__(self):
         string = ""

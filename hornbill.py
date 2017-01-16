@@ -9,7 +9,7 @@ import linecache
 from classes import *
 
 from edt import gen_edt
-from doxygen import gen_doxygen
+from doxygen import gen_doxygen, gen_doxygen_snippet
 from formatter import format_func
 
 import clang.cindex
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         print(gen_edt(func))
 
     elif sys.argv[1] == "doxygen":
-        print(gen_doxygen(func))
+        gen_doxygen_snippet(func)
 
     elif sys.argv[1] == "format":
         print(format_func(func))

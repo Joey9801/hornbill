@@ -6,21 +6,28 @@ def gen_doxygen(func):
 
     lines = ["/**"]
 
-    lines.append(" * {}".format(func.name))
+    lines.append(" * ${0:" + func.name + "}")
 
-    lines.append(" *")
-    lines.append(" * {}".format(func.comment))
-
-
+    i = 1
     for arg in func.args:
         lines.append(" *")
-        lines.append(" * @param[{}] {} ({})".format(arg.inout, arg.name, arg.typename))
-        lines.append(" *              {}".format(arg.comment))
+        lines.append(" * @param[${" + str(i) + ":in}] " + arg.name)
+        lines.append(" *              ${" + str(i+1) + ":" + arg.comment + "}")
+
+        i += 2
 
     lines.append(" *")
-    lines.append(" * @return {}".format(func.returns.typename))
-    lines.append(" *              {}".format(func.returns.comment))
+    lines.append(" * @return ${" + str(i) + ":" + func.returns.typename + "}")
+    lines.append(" *              ${" + str(i+1) + ":" + func.returns.comment + "}")
     lines.append(" */")
 
 
     return "\n".join(lines)
+
+def gen_doxygen_snippet(func):
+    body = gen_doxygen(func)
+
+    snippet = "snippet qwerty12345\n" + body + "\nendsnippet"
+
+    with open("/home/joe/.config/nvim/my_snippets/c_gen.snippets", 'w') as f:
+        f.write(snippet)
