@@ -9,6 +9,7 @@ from copy import deepcopy
 
 from classes import Function
 from classes import Variable
+from classes import CommentFormat
 
 class _State(enum.Enum):
     """
@@ -21,11 +22,6 @@ class _State(enum.Enum):
     COMMENT_STARTED = 4
     COMMENT_ENDED = 5
     COMMENT_NOT_ENCOUNTERED = 6
-
-
-class CommentFormat(enum.Enum):
-    Doxygen = 1
-    EDT = 2
 
 
 def _get_varname(line):

@@ -4,6 +4,11 @@ from collections import namedtuple
 Location = namedtuple("Location", ["filename", "linenumber"])
 
 
+class CommentFormat(enum.Enum):
+    Doxygen = 1
+    EDT = 2
+
+
 class Error(object):
     def __init__(self, linenumber = None, colnumber = None, error = ""):
         self.rel_linenumber = linenumber
