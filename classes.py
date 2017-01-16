@@ -1,7 +1,19 @@
-import clang.cindex
+import enum
 from collections import namedtuple
 
 Location = namedtuple("Location", ["filename", "linenumber"])
+
+
+class CommentFormat(enum.Enum):
+    Doxygen = 1
+    EDT = 2
+
+
+"""
+Represents a comment as written in a C file.
+"""
+VerbatimComment = namedtuple("VerbatimComment",
+                             ["start_loc", "end_loc", "comment"])
 
 
 class Error(object):
