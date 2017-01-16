@@ -69,6 +69,7 @@ def parse_func(filename, line_number):
     Given a filename and a line number for a single function
     declaration/definition, attempts to parse it out into a Function object
     """
+    # @@@TODO: this doesn't work on header files
     lines = [linecache.getline(filename, line_number - 1),
              linecache.getline(filename, line_number)]
 
@@ -111,23 +112,28 @@ def foobar(filename):
 
     compare(func_docstrings)
 
+
 if __name__ == "__main__":
     acceptable_types = {'edt', 'doxygen'}
 
     parser = argparse.ArgumentParser()
-    mode = parser.add_mutually_exclusive_group()
-    mode.add_argument('check-comment',
-                        help='Validate docstrings and declarations in a C file')
-    mode.add_argument('type',
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--check-comment',
+                      help='C file in which to validate comments')
+    mode.add_argument('--type',
                       help='edt or doxygen',
                       choices=acceptable_types)
     mode.add_argument('--format',
                       action='store_true',
                       help='Format the function nicely.')
 
-    parser.add_argument('file', help='C file to examine')
-    parser.add_argument('line', help='Line number of function name', type=int)
-    parser.add_argument('debug',
+    parser.add_argument('--file', help='C file to examine',
+                        required=False)
+    parser.add_argument('--line',
+                        help='Line number of function name',
+                        type=int,
+                        required=False)
+    parser.add_argument('--debug',
                         help='Turn on debug mode',
                         action='store_true')
 
@@ -137,6 +143,13 @@ if __name__ == "__main__":
         foobar(args.check_comment)
         exit()
 
+    if not args.file:
+        raise InputError("file positional argument is required.")
+    if not args.line:
+        raise InputError("line positional argument is required.")
+
+    print(args.file)
+    print(args.line)
     func = parse_func(args.file, args.line)
     if args.debug:
         print(func)
