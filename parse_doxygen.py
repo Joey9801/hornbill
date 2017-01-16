@@ -36,11 +36,11 @@ def parse_doxygen(in_lines):
     The result is a Function object.
     """
     if isinstance(in_lines, VerbatimComment):
-        lines = in_lines.comment
+        internal_lines = in_lines.comment
     else:
-        lines = in_lines
+        internal_lines = in_lines
 
-    lines = [line.strip() for line in lines]
+    lines = [line.strip() for line in internal_lines]
 
     if lines[0] != "/**":
         raise AssertionError("First line {} is not /**.".format(in_lines[0]))
@@ -193,6 +193,8 @@ def _test_parser():
              " */"
              ]
     ans = parse_doxygen(lines).dictify()
+
+    expected = [Function()]
     print(ans)
     print('----')
 
