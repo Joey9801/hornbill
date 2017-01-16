@@ -166,6 +166,7 @@ def find_func_docstrings(filename, functions, comment_format):
                 break
 
         if matching_docstring is not None:
+            print(matching_docstring)
             found_docstrings.append(parse_doxygen(matching_docstring))
         else:
             found_docstrings.append(None)
