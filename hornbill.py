@@ -15,6 +15,9 @@ from formatter import format_func
 import clang.cindex
 from clang.cindex import CursorKind
 
+from parse_file_functions import parse_file_functions
+from parse_doxygen import find_func_docstrings, CommentFormat
+
 
 def parse_temp_stubbed(temp_filename):
     """
@@ -96,19 +99,28 @@ def compare(functions):
             print c
             print "Docstring:"
             print d
-    
+
+def foobar(filename):
+    c_functions = parse_file_functions(filename)
+    func_docstrings = find_func_docstrings(filename, c_functions, CommentFormat.Doxygen)
+
+    print(func_docstrings)
 
 if __name__ == "__main__":
-    func = parse_func(sys.argv[2], int(sys.argv[3]))
+    if sys.argv[1] == "check-comment":
+        foobar(sys.argv[2])
 
-    if sys.argv[1] == "edt":
-        print(gen_edt(func))
+    else:
+        func = parse_func(sys.argv[2], int(sys.argv[3]))
 
-    elif sys.argv[1] == "doxygen":
-        gen_doxygen_snippet(func)
+        if sys.argv[1] == "edt":
+            print(gen_edt(func))
 
-    elif sys.argv[1] == "format":
-        print(format_func(func))
+        elif sys.argv[1] == "doxygen":
+            gen_doxygen_snippet(func)
 
-    elif sys.argv[1] == "debug":
-        print(func)
+        elif sys.argv[1] == "format":
+            print(format_func(func))
+
+        elif sys.argv[1] == "debug":
+            print(func)

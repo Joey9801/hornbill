@@ -4,6 +4,19 @@ foobar (int a, char b, madeup_type_t x)
 
 }
 
+
+/**
+ * foo
+ *
+ * @param[in] a
+ *              <Placeholder comment>
+ *
+ * @param[in] b
+ *              <Placeholder comment>
+ *
+ * @return int
+ *              <Placeholder comment>
+ */
 foobar_t
 func2 (char a,
         int b,
@@ -11,6 +24,7 @@ func2 (char a,
 
 struct thing
 func3 (int a);
+
 
 foo_t
 func4 (char a,

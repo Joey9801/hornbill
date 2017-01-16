@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from __future__ import print_function
 
 import os
@@ -127,7 +125,7 @@ def _find_toplevel_doxygen(c_lines):
     return comments
 
 
-def find_toplevel_docstrings(c_lines, comment_format):
+def find_toplevel_docstrings(filename, comment_format):
     """
     Find all top-level docstrings in a C file.
 
@@ -137,12 +135,34 @@ def find_toplevel_docstrings(c_lines, comment_format):
     c_lines is a list of lines of C source.
     comment_format is a CommentFormat enum.
     """
+
+    with open(filename) as f:
+        c_lines = f.readlines()
+
     if comment_format == CommentFormat.Doxygen:
         return _find_toplevel_doxygen(c_lines)
     elif comment_format == CommentFormat.EDT:
         return _find_toplevel_edt(c_lines)
     else:
         raise InputError("Unknown CommentFormat {}".format(comment_format))
+
+
+def find_func_docstrings(filename, functions, comment_format):
+    top_level_docstrings = find_toplevel_docstrings(filename, comment_format)
+
+    found_docstrings = list()
+
+    for func in functions:
+        func_line = func.location.linenumber
+
+        for docstring in top_level_docstrings:
+            if func_line - 2 <= docstring.end_loc < func_line:
+                matching_docstring = docstring
+                break
+
+        found_docstrings.append(matching_docstring)
+
+    return zip(functions, found_docstrings)
 
 
 def _test_parser():
