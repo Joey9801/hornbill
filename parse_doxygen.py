@@ -1,14 +1,10 @@
-#!/usr/bin/env python3
-
 from __future__ import print_function
 
 import os
 import enum
 
-from copy import deepcopy
+from classes import Function, Variable, CommentFormat, VerbatimComment
 
-from classes import Function
-from classes import Variable
 
 class _State(enum.Enum):
     """
@@ -23,11 +19,6 @@ class _State(enum.Enum):
     COMMENT_NOT_ENCOUNTERED = 6
 
 
-class CommentFormat(enum.Enum):
-    Doxygen = 1
-    EDT = 2
-
-
 def _get_varname(line):
     """
     Given a single line of comment, return the variable name it is commenting.
@@ -37,12 +28,19 @@ def _get_varname(line):
 
 def parse_doxygen(in_lines):
     """
-    Parse a list of lines representing a Doxygen comment into a structure.
+    Parse lines representing a Doxygen comment into a structure.
+
+    The lines may be a list of lines, or a VerbatimComment.
 
     The list of lines should be verbatim plucked from a C file.
     The result is a Function object.
     """
-    lines = [line.strip() for line in in_lines]
+    if isinstance(in_lines, VerbatimComment):
+        internal_lines = in_lines.comment
+    else:
+        internal_lines = in_lines
+
+    lines = [line.strip() for line in internal_lines]
 
     if lines[0] != "/**":
         raise AssertionError("First line {} is not /**.".format(in_lines[0]))
@@ -85,8 +83,6 @@ def parse_doxygen(in_lines):
     result = Function()
 
     if returns:
-        print("Returns")
-
         result.returns = Variable(name="<return>")
     else:
         result.returns = None
@@ -103,8 +99,7 @@ def _find_toplevel_doxygen(c_lines):
     """
     Find all top-level Doxygen docstrings in a C file.
 
-    Returns a list of the function docstrings, each docstring split on its
-    newlines. (For example, [['/**', ' *', ' * things', ' */']].)
+    Returns a list of VerbatimComments.
 
     c_lines is a list of lines of C source.
     """
@@ -112,22 +107,29 @@ def _find_toplevel_doxygen(c_lines):
     c_lines = [l.rstrip() for l in c_lines]
     state = _State.COMMENT_NOT_ENCOUNTERED
 
-    for line in c_lines:
+    for num, line in enumerate(c_lines):
         if line == '/**':
             state = _State.COMMENT_STARTED
-            current_comment = ['/**']
+            start_line = num + 1
+            comment = ['/**']
+            current_comment = VerbatimComment(comment=['/**'],
+                                              start_loc=num+1,
+                                              end_loc=-1)
         elif line == ' */' and state == _State.COMMENT_STARTED:
             state = _State.COMMENT_ENDED
-            current_comment.append(' */')
-            comments.append(deepcopy(current_comment))
+            comment.append(' */')
+
+            comments.append(VerbatimComment(comment=comment,
+                                            start_loc=start_line,
+                                            end_loc=num+1))
         else:
             if state == _State.COMMENT_STARTED:
-                current_comment.append(line)
+                comment.append(line)
 
     return comments
 
 
-def find_toplevel_docstrings(c_lines, comment_format):
+def find_toplevel_docstrings(filename, comment_format):
     """
     Find all top-level docstrings in a C file.
 
@@ -137,6 +139,10 @@ def find_toplevel_docstrings(c_lines, comment_format):
     c_lines is a list of lines of C source.
     comment_format is a CommentFormat enum.
     """
+
+    with open(filename) as f:
+        c_lines = f.readlines()
+
     if comment_format == CommentFormat.Doxygen:
         return _find_toplevel_doxygen(c_lines)
     elif comment_format == CommentFormat.EDT:
@@ -144,6 +150,27 @@ def find_toplevel_docstrings(c_lines, comment_format):
     else:
         raise InputError("Unknown CommentFormat {}".format(comment_format))
 
+
+def find_func_docstrings(filename, functions, comment_format):
+    top_level_docstrings = find_toplevel_docstrings(filename, comment_format)
+
+    found_docstrings = list()
+
+    for func in functions:
+        func_line = func.location.linenumber
+
+        matching_docstring = None
+        for docstring in top_level_docstrings:
+            if func_line - 2 <= docstring.end_loc < func_line:
+                matching_docstring = docstring
+                break
+
+        if matching_docstring is not None:
+            found_docstrings.append(parse_doxygen(matching_docstring))
+        else:
+            found_docstrings.append(None)
+
+    return zip(functions, found_docstrings)
 
 def _test_parser():
     lines = ["/**",
@@ -163,6 +190,8 @@ def _test_parser():
              " */"
              ]
     ans = parse_doxygen(lines).dictify()
+
+    expected = [Function()]
     print(ans)
     print('----')
 

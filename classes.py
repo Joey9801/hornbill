@@ -1,7 +1,21 @@
-import clang.cindex
+import enum
 from collections import namedtuple
 
+from copy import deepcopy
+
 Location = namedtuple("Location", ["filename", "linenumber"])
+
+
+class CommentFormat(enum.Enum):
+    Doxygen = 1
+    EDT = 2
+
+
+"""
+Represents a comment as written in a C file.
+"""
+VerbatimComment = namedtuple("VerbatimComment",
+                             ["start_loc", "end_loc", "comment"])
 
 
 class Error(object):
@@ -76,8 +90,8 @@ class Function(object):
                               for x in clang_node.get_arguments() ]
         else:
             self.location = Location()
-            self.name = ""
-            self.returns = Variable()
+            self.name = None
+            self.returns = None
             self.args = []
 
         self.comment  = "<Placeholder comment>"
@@ -103,17 +117,17 @@ class Function(object):
             if self.name != other.name:
                 ret = False
         if self.returns and other.returns:
-            if self.returns != other.returns:
+            if not self.returns == other.returns:
                 ret = False
         if self.args and other.args:
-            missing_args = other.args
+            missing_args = deepcopy(other.args)
             for arg in self.args:
                 found = False
                 for barg in missing_args:
                     if arg == barg:
                         found = True
                         missing_args.remove(barg)
-                        break                
+                        break
                 if not found:
                     ret = False
         return ret
