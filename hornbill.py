@@ -106,7 +106,7 @@ def compare(functions):
             print("")
             print("")
 
-def foobar(filename):
+def validate_c_file(filename):
     c_functions = parse_file_functions(filename)
     func_docstrings = find_func_docstrings(filename, c_functions, CommentFormat.Doxygen)
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.check_comment:
-        foobar(args.check_comment)
+        validate_c_file(args.check_comment)
         exit()
 
     if not args.file:
