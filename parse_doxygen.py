@@ -5,11 +5,8 @@ from __future__ import print_function
 import os
 import enum
 
-from copy import deepcopy
+from classes import Function, Variable, CommentFormat, VerbatimComment
 
-from classes import Function
-from classes import Variable
-from classes import CommentFormat
 
 class _State(enum.Enum):
     """
@@ -33,12 +30,19 @@ def _get_varname(line):
 
 def parse_doxygen(in_lines):
     """
-    Parse a list of lines representing a Doxygen comment into a structure.
+    Parse lines representing a Doxygen comment into a structure.
+
+    The lines may be a list of lines, or a VerbatimComment.
 
     The list of lines should be verbatim plucked from a C file.
     The result is a Function object.
     """
-    lines = [line.strip() for line in in_lines]
+    if isinstance(in_lines, VerbatimComment):
+        lines = in_lines.comment
+    else:
+        lines = in_lines
+
+    lines = [line.strip() for line in lines]
 
     if lines[0] != "/**":
         raise AssertionError("First line {} is not /**.".format(in_lines[0]))
@@ -99,8 +103,7 @@ def _find_toplevel_doxygen(c_lines):
     """
     Find all top-level Doxygen docstrings in a C file.
 
-    Returns a list of the function docstrings, each docstring split on its
-    newlines. (For example, [['/**', ' *', ' * things', ' */']].)
+    Returns a list of VerbatimComments.
 
     c_lines is a list of lines of C source.
     """
@@ -108,17 +111,24 @@ def _find_toplevel_doxygen(c_lines):
     c_lines = [l.rstrip() for l in c_lines]
     state = _State.COMMENT_NOT_ENCOUNTERED
 
-    for line in c_lines:
+    for num, line in enumerate(c_lines):
         if line == '/**':
             state = _State.COMMENT_STARTED
-            current_comment = ['/**']
+            start_line = num + 1
+            comment = ['/**']
+            current_comment = VerbatimComment(comment=['/**'],
+                                              start_loc=num+1,
+                                              end_loc=-1)
         elif line == ' */' and state == _State.COMMENT_STARTED:
             state = _State.COMMENT_ENDED
-            current_comment.append(' */')
-            comments.append(deepcopy(current_comment))
+            comment.append(' */')
+
+            comments.append(VerbatimComment(comment=comment,
+                                            start_loc=start_line,
+                                            end_loc=num+1))
         else:
             if state == _State.COMMENT_STARTED:
-                current_comment.append(line)
+                comment.append(line)
 
     return comments
 
