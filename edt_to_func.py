@@ -1,4 +1,4 @@
-from Classes import *
+from classes import *
 
 
 def parse_edt(edt):
@@ -31,44 +31,47 @@ def parse_edt(edt):
 def check_edt(edt):
     """
     Checks an edt comment for errors.
+
+    We use an index, i, to keep track of the part of the edt we're expecting
+    next. The stages are ['edt', 'comment', 'return', 'arguments']
     """
     errors = []
-    stages = ["Fuction name", "Comment", "Return", "Args"]
     i = 0
-
     for j,line in enumerate(edt):
         if line.startswith(" * edt: ") and i == 0:
             # Found edt line
-            i += 1
-        if line.startswith(" * edt: ") and i != 0:
+            i = 1
+        elif line.startswith(" * edt: ") and i != 0:
             error = Error(j, None, "Unexpected 'edt:' line")
             errors.append(error)
-        elif line != " * " and i == 1:
-            # Found the comment between edt line and return line
-            i += 1
         elif line.startswith(" * Return: ") and i == 2:
             # Found return line
-            i += 1
+            i = 3
         elif line.startswith(" * Return: ") and i != 2:
-            error = Error(j, None, "Unexpected 'Return:' line")
-        elif line.startswith(" * Argument: "):
-            continue
-
-
-
-
+            if i == 0:
+                error = Error(j, None, "Missing 'edt:' line.")
+            elif i == 1:
+                error = Error(j, None, "Missing function comment.")
+            else:
+                error = Error(j, None, "Unexpected 'Return:' line.")
+            errors.append(error)
+        elif line.startswith(" * Argument: ") and i == 2:
+            error = Error(j, None, "Missing 'Return:' line.")
+            errors.append(error)
+            i = 3 # So we don't repeat the error.
+        elif line.strip() != "*" and i == 1:
+            # Found the comment between edt line and return line
+            print "Found comment!"
+            print [line]
+            i = 2
 
     return errors
-
-
-        
 
 
 
 _ref = """/*
  * edt: * function fry
  *
- * Fry some eggs.
  *
  * Return: cerrno
  *   Whether we fried the eggs. This line is very, very, very, very, very, very,
@@ -83,9 +86,12 @@ _ref = """/*
 _ref = _ref.split("\n")
 
 if __name__ == "__main__":
-    error = check_edt(_ref)
-    if error:
-        print(error)
+    errors = check_edt(_ref)
+    if errors:
+        print "Errors found in edt"
+        for e in errors:
+            print e
     else:
+        print "No errors found in edt."
         f = parse_edt(_ref)
         print(f)
