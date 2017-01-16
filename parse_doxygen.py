@@ -85,8 +85,6 @@ def parse_doxygen(in_lines):
     result = Function()
 
     if returns:
-        print("Returns")
-
         result.returns = Variable(name="<return>")
     else:
         result.returns = None
@@ -169,6 +167,8 @@ def _test_parser():
              " */"
              ]
     ans = parse_doxygen(lines).dictify()
+
+    expected = [Function()]
     print(ans)
     print('----')
 
