@@ -1,4 +1,7 @@
 import clang.cindex
+from collections import namedtuple
+
+Location = namedtuple("Location", ["filename", "linenumber"])
 
 
 class Error(object):
@@ -50,8 +53,8 @@ class Variable(object):
 class Function(object):
     def __init__(self, clang_node = None):
         if clang_node is not None:
-            self.location = Location(clang_node.location.file.name,
-                                     clang_node.location.line)
+            self.location = Location(filename=clang_node.location.file.name,
+                                     linenumber=clang_node.location.line)
             self.name     = clang_node.spelling
             self.returns  = Variable(typename = clang_node.result_type.spelling,
                                      name     = "<return>")
@@ -80,7 +83,12 @@ class Function(object):
         return string
 
     def dictify(self):
-        return {"location": self.location.dictify(),
+        if self.location:
+            loc = self.location._as_dict()
+        else:
+            loc = None
+
+        return {"location": loc,
                 "name"    : self.name,
                 "returns" : self.returns.dictify(),
                 "args"    : [x.dictify() for x in self.args],

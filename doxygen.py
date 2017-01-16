@@ -1,3 +1,5 @@
+import os
+
 def gen_doxygen(func):
     """
     Given a parsed function, generate a doxygen template
@@ -29,5 +31,10 @@ def gen_doxygen_snippet(func):
 
     snippet = "snippet qwerty12345\n" + body + "\nendsnippet"
 
-    with open("/home/joe/.config/nvim/my_snippets/c_gen.snippets", 'w') as f:
+    try:
+        os.makedirs("/tmp/snippets")
+    except OSError:
+        pass
+
+    with open("/tmp/snippets/c_hornbill.snippets", 'w') as f:
         f.write(snippet)
