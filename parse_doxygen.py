@@ -83,8 +83,6 @@ def parse_doxygen(in_lines):
     result = Function()
 
     if returns:
-        print("Returns")
-
         result.returns = Variable(name="<return>")
     else:
         result.returns = None
@@ -161,12 +159,17 @@ def find_func_docstrings(filename, functions, comment_format):
     for func in functions:
         func_line = func.location.linenumber
 
+        matching_docstring = None
         for docstring in top_level_docstrings:
             if func_line - 2 <= docstring.end_loc < func_line:
                 matching_docstring = docstring
                 break
 
-        found_docstrings.append(matching_docstring)
+        if matching_docstring is not None:
+            found_docstrings.append(parse_doxygen(matching_docstring))
+        else:
+            found_docstrings.append(None)
+
 
     return zip(functions, found_docstrings)
 

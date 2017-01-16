@@ -88,8 +88,8 @@ class Function(object):
                               for x in clang_node.get_arguments() ]
         else:
             self.location = Location()
-            self.name = ""
-            self.returns = Variable()
+            self.name = None
+            self.returns = None
             self.args = []
 
         self.comment  = "<Placeholder comment>"
@@ -110,12 +110,15 @@ class Function(object):
         ret = True
         if self.location and other.location:
             if self.location != other.location:
+                print "loc"
                 ret = False
         if self.name and other.name:
             if self.name != other.name:
+                print "name"
                 ret = False
         if self.returns and other.returns:
             if self.returns != other.returns:
+                print "returns"
                 ret = False
         if self.args and other.args:
             missing_args = other.args
@@ -125,8 +128,9 @@ class Function(object):
                     if arg == barg:
                         found = True
                         missing_args.remove(barg)
-                        break                
+                        break
                 if not found:
+                    print "arg"
                     ret = False
         return ret
 

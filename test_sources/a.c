@@ -4,7 +4,6 @@ foobar (int a, char b, madeup_type_t x)
 
 }
 
-
 /**
  * foo
  *
@@ -14,9 +13,11 @@ foobar (int a, char b, madeup_type_t x)
  * @param[in] b
  *              <Placeholder comment>
  *
+ * @param[in] c
+ *
  * @return int
  *              <Placeholder comment>
- */
+ */ 
 foobar_t
 func2 (char a,
         int b,

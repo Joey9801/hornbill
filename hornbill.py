@@ -100,11 +100,14 @@ def compare(functions):
             print "Docstring:"
             print d
 
+            print
+            print
+
 def foobar(filename):
     c_functions = parse_file_functions(filename)
     func_docstrings = find_func_docstrings(filename, c_functions, CommentFormat.Doxygen)
 
-    print(func_docstrings)
+    compare(func_docstrings)
 
 if __name__ == "__main__":
     if sys.argv[1] == "check-comment":
