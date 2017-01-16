@@ -39,6 +39,18 @@ class Variable(object):
         else:
             return "Type: {}, Name: {}, In/Out: {}".format(self.typename, self.name, self.inout)
 
+    def __eq__(self, other):
+        ret = True
+        if self.name != other.name:
+            ret = False
+        if self.inout and other.inout:
+            if self.inout != other.inout:
+                ret = False
+        if self.typename and other.typename:
+            if self.typename != other.typename:
+                ret = False
+        return ret
+    
     def dictify(self):
         if self.name == "<return>":
             return {"type"   : self.typename,
@@ -81,6 +93,30 @@ class Function(object):
                 string += "    {}\n".format(arg)
 
         return string
+
+    def __eq__(self, other):
+        ret = True
+        if self.location and other.location:
+            if self.location != other.location:
+                ret = False
+        if self.name and other.name:
+            if self.name != other.name:
+                ret = False
+        if self.returns and other.returns:
+            if self.returns != other.returns:
+                ret = False
+        if self.args and other.args:
+            missing_args = other.args
+            for arg in self.args:
+                found = False
+                for barg in missing_args:
+                    if arg == barg:
+                        found = True
+                        missing_args.remove(barg)
+                        break                
+                if not found:
+                    ret = False
+        return ret
 
     def dictify(self):
         if self.location:

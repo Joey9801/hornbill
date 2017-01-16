@@ -83,6 +83,21 @@ def parse_func(filename, line_number):
     return func
 
 
+def compare(functions):
+    """
+    Compare functions parsed from C and functions parsed from docstrings
+    """
+    for f in functions:
+        c = f[0]
+        d = f[1]
+        if c != d:
+            print "Mismatch between function and docstring"
+            print "Function:"
+            print c
+            print "Docstring:"
+            print d
+    
+
 if __name__ == "__main__":
     func = parse_func(sys.argv[2], int(sys.argv[3]))
 
