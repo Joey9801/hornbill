@@ -1,8 +1,10 @@
 #!/home/joe/Documents/independence_day/hornbill/python-venv/bin/python
+from __future__ import print_function
 
 import re
 import sys
 import json
+import argparse
 import tempfile
 import linecache
 
@@ -94,14 +96,14 @@ def compare(functions):
         c = f[0]
         d = f[1]
         if c != d:
-            print "Mismatch between function and docstring"
-            print "Function:"
-            print c
-            print "Docstring:"
-            print d
+            print("Mismatch between function and docstring")
+            print("Function:")
+            print(c)
+            print("Docstring:")
+            print(d)
 
-            print
-            print
+            print("")
+            print("")
 
 def foobar(filename):
     c_functions = parse_file_functions(filename)
@@ -110,20 +112,41 @@ def foobar(filename):
     compare(func_docstrings)
 
 if __name__ == "__main__":
-    if sys.argv[1] == "check-comment":
-        foobar(sys.argv[2])
+    acceptable_types = {'edt', 'doxygen'}
 
+    parser = argparse.ArgumentParser()
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('check-comment',
+                        help='Validate docstrings and declarations in a C file')
+    mode.add_argument('type',
+                      help='edt or doxygen',
+                      choices=acceptable_types)
+    mode.add_argument('--format',
+                      action='store_true',
+                      help='Format the function nicely.')
+
+    parser.add_argument('file', help='C file to examine')
+    parser.add_argument('line', help='Line number of function name', type=int)
+    parser.add_argument('debug',
+                        help='Turn on debug mode',
+                        action='store_true')
+
+
+    args = parser.parse_args()
+    if args.check_comment:
+        foobar(args.check_comment)
+        exit()
+
+    func = parse_func(args.file, args.line)
+    if args.debug:
+        print(func)
+
+    if args.format:
+        print(format_func(func))
     else:
-        func = parse_func(sys.argv[2], int(sys.argv[3]))
-
-        if sys.argv[1] == "edt":
+        if args.type == 'edt':
             print(gen_edt(func))
-
-        elif sys.argv[1] == "doxygen":
+        elif args.type == 'doxygen':
             gen_doxygen_snippet(func)
-
-        elif sys.argv[1] == "format":
-            print(format_func(func))
-
-        elif sys.argv[1] == "debug":
-            print(func)
+        else:
+            raise AssertionError("Unknown type {} received".format(args.type))
