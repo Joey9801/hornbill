@@ -116,6 +116,8 @@ if __name__ == "__main__":
     else:
         func = parse_func(sys.argv[2], int(sys.argv[3]))
 
+        print(func)
+
         if sys.argv[1] == "edt":
             print(gen_edt(func))
 
