@@ -15,8 +15,6 @@ from formatter import format_func
 import clang.cindex
 from clang.cindex import CursorKind
 
-import struct_to_edt
-
 
 def parse_temp_stubbed(temp_filename):
     """
