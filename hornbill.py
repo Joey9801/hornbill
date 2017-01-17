@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument('--check-comment',
+    mode.add_argument('--comment-check',
                       help='C file in which to validate comments')
     mode.add_argument('--type',
                       help='edt or doxygen',
