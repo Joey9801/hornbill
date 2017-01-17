@@ -155,7 +155,10 @@ def find_documentation_errors(filename):
         c_def = func[0]
         doc   = func[1]
 
-        if doc is None:
+        if isinstance(doc, DummyFunction):
+            continue
+
+        elif doc is None:
             errors.append(NoDocumentationError(c_def))
             continue
 
@@ -203,8 +206,8 @@ if __name__ == "__main__":
 
 
     args = parser.parse_args()
-    if args.check_comment:
-        errors = find_documentation_errors(args.check_comment)
+    if args.comment_check:
+        errors = find_documentation_errors(args.comment_check)
         for err in errors:
             err.print_err()
         exit()

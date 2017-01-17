@@ -64,7 +64,7 @@ class Variable(object):
             if self.typename != other.typename:
                 ret = False
         return ret
-    
+
     def dictify(self):
         if self.name == "<return>":
             return {"type"   : self.typename,
@@ -74,7 +74,6 @@ class Variable(object):
             return {"name"   : self.name,
                     "type"   : self.typename,
                     "comment": self.comment}
-
 
 class Function(object):
     def __init__(self, clang_node = None):
@@ -146,4 +145,9 @@ class Function(object):
                 "args"    : [x.dictify() for x in self.args],
                 "comment" : self.comment}
 
-
+class DummyFunction(Function):
+    def __eq__(self, other):
+        if isinstance(other, DummyFunction):
+            return False
+        elif isinstance(other, Function):
+            return True

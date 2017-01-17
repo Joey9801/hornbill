@@ -2,8 +2,9 @@ from __future__ import print_function
 
 import os
 import enum
+import re
 
-from classes import Function, Variable, CommentFormat, VerbatimComment
+from classes import Function, DummyFunction, Variable, CommentFormat, VerbatimComment
 
 
 class _State(enum.Enum):
@@ -23,7 +24,41 @@ def _get_varname(line):
     """
     Given a single line of comment, return the variable name it is commenting.
     """
-    return line.strip().split()[-1]
+    words = line.strip().split()
+
+    if len(words) < 2:
+        return ""
+    else:
+        return words[1]
+
+def _is_reference(lines):
+    """
+    Returns True iff the comment lines seem to indicate that the documentation
+    can be found elsewhere.
+    """
+
+    key_phrases = [
+            "function description",
+            "for documentation",
+            "see"
+            ]
+
+    header_file = re.compile(".* [^. ]*\.h.*")
+    implements_cb = re.compile(".* (implements) [^ ]*_cb.*")
+
+    # Referencing a header file?
+    for line in lines:
+        if header_file.match(line):
+            for phrase in key_phrases:
+                if phrase in line.lower():
+                    return True
+
+    # Referencing a callback type?
+    for line in lines:
+        if implements_cb.match(line):
+            return True
+
+    return False
 
 
 def parse_doxygen(in_lines):
@@ -58,6 +93,9 @@ def parse_doxygen(in_lines):
 
     lines = lines[:-1]
 
+    if _is_reference(lines):
+        return DummyFunction()
+
     # Split the lines list; its format is "overall comment", then a list of
     # parameters/return values, each with a comment.
     params = []
@@ -87,7 +125,7 @@ def parse_doxygen(in_lines):
     else:
         result.returns = None
 
-    result.args = [Variable(name=_get_varname(arg)) for arg in params]
+    result.args = [Variable(name=arg) for arg in params]
     result.location = None
     result.name = None
     result.comment = '\n'.join(initial_comment).strip()
