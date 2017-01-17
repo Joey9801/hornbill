@@ -70,7 +70,12 @@ def stub_lines(lines):
             elif brace_levels > 0 and char != "\n":
                 line[j] = " "
 
-        lines[i] = "".join(line)
+        line = "".join(line)
+
+        if line.startswith("typedef"):
+            line = "// " + line
+
+        lines[i] = line
 
     return lines
 
@@ -133,11 +138,8 @@ def parse_file_functions(filename):
 
     functions = [Function(x) for x in root_nodes if x.kind == CursorKind.FUNCTION_DECL]
 
-    # The stubbed typedefs inserted at the beginning of the line will have
-    # increased the line number of all functions by one. Decrease them all by
-    # one
     for f in functions:
-        f.location.linenumber -= 1
+        f.location.filename = filename
 
     return functions
 

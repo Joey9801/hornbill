@@ -133,8 +133,7 @@ def find_toplevel_docstrings(filename, comment_format):
     """
     Find all top-level docstrings in a C file.
 
-    Returns a list of the function docstrings, each docstring split on its
-    newlines. (For example, [['/**', ' *', ' * things', ' */']].)
+    Returns a list of the function docstrings, each docstring a VerbatimComment.
 
     c_lines is a list of lines of C source.
     comment_format is a CommentFormat enum.
