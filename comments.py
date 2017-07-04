@@ -102,7 +102,12 @@ def find_func_docstrings(filename, functions):
     if None not in found_docstrings:
         return zip(functions, found_docstrings)
     else:
-        edt_comments = [parse_edt(x) for x in edt_comments]
+        for i, verbatim_comment in enumerate(edt_comments):
+            try:
+                edt_comments[i] = parse_edt(verbatim_comment)
+            except ParserError as e:
+                edt_comments[i] = None
+                print(e)
 
 
     # Then try to find an EDT comment for any remaining. Most EDT's are linked

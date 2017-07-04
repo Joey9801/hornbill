@@ -8,6 +8,7 @@ import re
 
 from classes import *
 
+_location = None
 
 def wrap_single_line(line, length=80, indent_len=4, already_indented=False):
     """
@@ -136,11 +137,14 @@ class _State(enum.Enum):
 def _parse_edt_defition_line(line):
     assert(line.startswith("edt:"))
 
+    global _location
+
     line = line[len("edt:"):].strip()
     parts = line.split()
 
     if len(parts) != 3:
-        raise AssertionError("EDT definition line \"{}\" appears malformed".format(line))
+        raise ParserError("EDT definition line \"{}\" appears malformed".format(line),
+                _location)
 
     for i, part in enumerate(parts):
         if part == "*":
@@ -151,10 +155,13 @@ def _parse_edt_defition_line(line):
 def _get_varname(line):
     assert(line.startswith("Argument:"))
 
+    global _location
+
     parts = line.split()
 
     if len(parts) != 2 and len(parts) != 3:
-        raise AssertionError("EDT 'Argument' line \"{}\" appears malformed".format(line))
+        raise ParserError("EDT 'Argument' line \"{}\" appears malformed".format(line),
+                _location)
 
     return parts[-1]
 
@@ -194,24 +201,37 @@ def parse_edt(in_lines):
     """
     Parses an edt comment into a function class.
     """
+
+    global _location
+
     if isinstance(in_lines, VerbatimComment):
         lines = in_lines.comment
+        _location = in_lines.start_loc
     else:
         lines = in_lines
+        _location = None
 
     lines = [line.strip() for line in lines]
 
     if lines[0] != "/*":
-        raise AssertionError("First line {} is not /*.".format(lines[0]))
+        raise ParserError("First line {} is not /*.".format(lines[0]),
+                _location)
 
     for i, line in enumerate(lines[1:]):
+        if _location != None:
+            _location += 1
         if line[0] != '*':
-            raise AssertionError("Line {} does not start with *".format(i))
+            raise ParserError("Comment line does not start with *",
+                _location)
 
     if lines[-1] != "*/":
-        raise AssertionError("Last line {} is not */.".format(lines[0]))
+        if _location != None:
+            _location += 1
+        raise ParserError("Last line is not */.", _location)
 
     lines = [x[1:].strip() for x in lines[1:-1]]
+    if _location != None:
+        _location -= len(lines)
 
     # At this point, 'lines' is a list of the lines of text which make up the
     # comment, exlucing all leading '/*', '*', and '*/' tokens.
@@ -227,11 +247,15 @@ def parse_edt(in_lines):
 
     which_state = _State.INITIAL_COMMENT
     for line in lines:
+        if _location != None:
+            _location += 1
+
         if line.startswith("edt:"):
             if def_line is not None:
                 for line in lines:
                     print(line)
-                raise AssertionError("Multiple EDT definition lines found!")
+                raise ParserError("Multiple EDT definition lines found!",
+                        _location)
 
             def_line = _parse_edt_defition_line(line)
 

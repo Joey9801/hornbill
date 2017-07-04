@@ -154,3 +154,16 @@ class DummyFunction(Function):
             return False
         elif isinstance(other, Function):
             return True
+
+
+class ParserError():
+    def __init__(self, problem, location=None):
+        self.problem = problem
+        self.location = location
+
+    def __str__(self):
+        string = str(self.problem)
+        if self.location is not None:
+            string += ": line " + str(self.location)
+
+        return string
