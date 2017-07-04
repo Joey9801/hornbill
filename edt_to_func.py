@@ -6,7 +6,8 @@ def parse_edt(edt):
     Parses an edt comment into a function class.    
     """
     f = Function()
-    for i,line in enumerate(edt):
+    for i,line in enumerate(edt.comment):
+        print(line)
         if line.startswith(" * edt: "):
             f.name = line[8:].split()[2]
         elif line.startswith(" * Return: "):
@@ -15,7 +16,8 @@ def parse_edt(edt):
         elif line.startswith(" * Argument: "):
             arg = Variable()
             arg.name = line[13:].strip()
-            next_line = edt[i+1][2:].strip().split()
+            next_line = edt.comment[i+1][2:].strip().split()
+            import code; code.interact(local=locals())
             if next_line[0] == "IN:":
                 arg.inout = "in"
             elif next_line[0] == "INOUT:":

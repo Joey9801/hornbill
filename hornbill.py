@@ -137,6 +137,9 @@ class BaseDocumentationError(object):
 class NoDocumentationError(BaseDocumentationError):
     string = "Is missing documentation!"
 
+class NoReturnError(BaseDocumentationError):
+    string = "Missing return documentation in non-void function"
+
 class MissingArgumentError(BaseDocumentationError):
     string = "Argument missing from docstring: {argname}"
 
@@ -176,6 +179,9 @@ def find_documentation_errors(filename):
             for i in range(len(c_def.args)):
                 if not c_def.args[i] == doc.args[i]:
                     errors.append(WrongArgumentError(c_def, c_def.args[i].name))
+
+        if c_def.returns.typename != "void" and doc.returns is None:
+            errors.append(NoReturnError(c_def, None))
 
 
     return errors

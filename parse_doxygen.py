@@ -6,6 +6,8 @@ import re
 
 from classes import Function, DummyFunction, Variable, CommentFormat, VerbatimComment
 
+from edt_to_func import parse_edt
+
 
 class _State(enum.Enum):
     """
@@ -133,7 +135,8 @@ def parse_doxygen(in_lines):
     return result
 
 
-def _find_toplevel_doxygen(c_lines):
+
+def _find_toplevel_comments(c_lines, comment_format):
     """
     Find all top-level Doxygen docstrings in a C file.
 
@@ -145,8 +148,15 @@ def _find_toplevel_doxygen(c_lines):
     c_lines = [l.rstrip() for l in c_lines]
     state = _State.COMMENT_NOT_ENCOUNTERED
 
+    if comment_format == CommentFormat.Doxygen:
+        comment_start = "/**"
+    elif comment_format == CommentFormat.EDT:
+        comment_start = "/*"
+    else:
+        raise InputError("Unknown CommentFormat {}".format(comment_format))
+
     for num, line in enumerate(c_lines):
-        if line == '/**':
+        if line == comment_start:
             state = _State.COMMENT_STARTED
             start_line = num + 1
             comment = ['/**']
@@ -180,12 +190,7 @@ def find_toplevel_docstrings(filename, comment_format):
     with open(filename) as f:
         c_lines = f.readlines()
 
-    if comment_format == CommentFormat.Doxygen:
-        return _find_toplevel_doxygen(c_lines)
-    elif comment_format == CommentFormat.EDT:
-        return _find_toplevel_edt(c_lines)
-    else:
-        raise InputError("Unknown CommentFormat {}".format(comment_format))
+    return _find_toplevel_comments(c_lines, comment_format)
 
 
 def find_func_docstrings(filename, functions, comment_format):
@@ -203,7 +208,10 @@ def find_func_docstrings(filename, functions, comment_format):
                 break
 
         if matching_docstring is not None:
-            found_docstrings.append(parse_doxygen(matching_docstring))
+            if comment_format == CommentFormat.Doxygen:
+                found_docstrings.append(parse_doxygen(matching_docstring))
+            elif comment_format == CommentFormat.EDT:
+                found_docstrings.append(parse_edt(matching_docstring))
         else:
             found_docstrings.append(None)
 
