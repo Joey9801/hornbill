@@ -186,8 +186,8 @@ def check_edt(edt):
             i = 3 # So we don't repeat the error.
         elif line.strip() != "*" and i == 1:
             # Found the comment between edt line and return line
-            print "Found comment!"
-            print [line]
+            print("Found comment!")
+            print([line])
             i = 2
 
     return errors
@@ -314,10 +314,10 @@ _ref = _ref.split("\n")
 if __name__ == "__main__":
     errors = check_edt(_ref)
     if errors:
-        print "Errors found in edt"
+        print("Errors found in edt")
         for e in errors:
-            print e
+            print(e)
     else:
-        print "No errors found in edt."
+        print("No errors found in edt.")
         f = parse_edt(_ref)
         print(f)

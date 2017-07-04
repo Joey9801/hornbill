@@ -4,9 +4,7 @@ import os
 import enum
 import re
 
-from classes import Function, DummyFunction, Variable, CommentFormat, VerbatimComment
-
-from edt_to_func import parse_edt
+from classes import *
 
 
 class _State(enum.Enum):
@@ -133,89 +131,6 @@ def parse_doxygen(in_lines):
     result.comment = '\n'.join(initial_comment).strip()
 
     return result
-
-
-
-def _find_toplevel_comments(c_lines, comment_format):
-    """
-    Find all top-level Doxygen docstrings in a C file.
-
-    Returns a list of VerbatimComments.
-
-    c_lines is a list of lines of C source.
-    """
-    comments = []  # This is what we will return
-    c_lines = [l.rstrip() for l in c_lines]
-    state = _State.COMMENT_NOT_ENCOUNTERED
-
-    if comment_format == CommentFormat.Doxygen:
-        comment_start = "/**"
-    elif comment_format == CommentFormat.EDT:
-        comment_start = "/*"
-    else:
-        raise InputError("Unknown CommentFormat {}".format(comment_format))
-
-    for num, line in enumerate(c_lines):
-        if line == comment_start:
-            state = _State.COMMENT_STARTED
-            start_line = num + 1
-            comment = ['/**']
-            current_comment = VerbatimComment(comment=['/**'],
-                                              start_loc=num+1,
-                                              end_loc=-1)
-        elif line == ' */' and state == _State.COMMENT_STARTED:
-            state = _State.COMMENT_ENDED
-            comment.append(' */')
-
-            comments.append(VerbatimComment(comment=comment,
-                                            start_loc=start_line,
-                                            end_loc=num+1))
-        else:
-            if state == _State.COMMENT_STARTED:
-                comment.append(line)
-
-    return comments
-
-
-def find_toplevel_docstrings(filename, comment_format):
-    """
-    Find all top-level docstrings in a C file.
-
-    Returns a list of the function docstrings, each docstring a VerbatimComment.
-
-    c_lines is a list of lines of C source.
-    comment_format is a CommentFormat enum.
-    """
-
-    with open(filename) as f:
-        c_lines = f.readlines()
-
-    return _find_toplevel_comments(c_lines, comment_format)
-
-
-def find_func_docstrings(filename, functions, comment_format):
-    top_level_docstrings = find_toplevel_docstrings(filename, comment_format)
-
-    found_docstrings = list()
-
-    for func in functions:
-        func_line = func.location.linenumber
-
-        matching_docstring = None
-        for docstring in top_level_docstrings:
-            if func_line - 2 <= docstring.end_loc < func_line:
-                matching_docstring = docstring
-                break
-
-        if matching_docstring is not None:
-            if comment_format == CommentFormat.Doxygen:
-                found_docstrings.append(parse_doxygen(matching_docstring))
-            elif comment_format == CommentFormat.EDT:
-                found_docstrings.append(parse_edt(matching_docstring))
-        else:
-            found_docstrings.append(None)
-
-    return zip(functions, found_docstrings)
 
 
 def gen_doxygen(func):

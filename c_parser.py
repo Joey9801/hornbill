@@ -38,9 +38,16 @@ Second:
     Cons: More work to set up
           Higher change of systematically getting it wrong
           Have to work to preserve line numbers
+
+
+This file implementes the second option.
 """
 
+clang.cindex.Config.set_library_file('/usr/lib/llvm-3.8/lib/libclang.so.1')
+
 def stub_lines(lines):
+    """Remove any actual content from a set of lines describing c source, apart
+    from the top level declarations of functions and structs."""
     #Remove the include
     for i, line in enumerate(lines):
         if line.startswith("#include"):
@@ -48,7 +55,7 @@ def stub_lines(lines):
 
     # Remove all the function bodies. Or rather, replace all top level curly
     # braces with a single semicolon.
-    # This removes struct definitions, but that's OK for now.
+    # This removes the fields in any struct definitions, but that's OK for now.
     brace_levels = 0
     for i, line in enumerate(lines):
         line = list(line)
@@ -130,6 +137,7 @@ def clang_parse_file(filename):
 
 
 def parse_file_functions(filename):
+    """Returns a list of parsed Function objects from a given C file"""
     clang.cindex.Config.set_library_file('/usr/lib/llvm-3.8/lib/libclang.so.1')
 
     stubbed_filename = create_stubbed_file(filename)
@@ -142,12 +150,3 @@ def parse_file_functions(filename):
         f.location.filename = filename
 
     return functions
-
-if __name__ == "__main__":
-
-    clang.cindex.Config.set_library_file('/usr/lib/llvm-3.8/lib/libclang.so.1')
-
-    functions = parse_file_functions("yve.c")
-
-    for func in functions:
-        print(func)
