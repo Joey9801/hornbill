@@ -137,17 +137,22 @@ class BaseDocumentationError(object):
 class NoDocumentationError(BaseDocumentationError):
     string = "Is missing documentation!"
 
+
 class NoReturnError(BaseDocumentationError):
     string = "Missing return documentation in non-void function"
+
 
 class MissingArgumentError(BaseDocumentationError):
     string = "Argument missing from docstring: {argname}"
 
+
 class ExtraArgumentError(BaseDocumentationError):
     string = "Extra argument in docstring: {argname}"
 
+
 class WrongArgumentError(BaseDocumentationError):
     string = "Argument incorrect in docstring: {argname}"
+
 
 def find_documentation_errors(filename):
     c_functions = parse_file_functions(filename)
@@ -185,6 +190,7 @@ def find_documentation_errors(filename):
 
 
     return errors
+
 
 if __name__ == "__main__":
     acceptable_types = {'edt', 'doxygen'}
