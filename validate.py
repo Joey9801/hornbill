@@ -1,13 +1,13 @@
 from __future__ import print_function
+import os
 
 from classes import *
-
 import c_parser
 import comments
 
 
 class BaseDocumentationError(object):
-    base_string = "Error in function {funcname} at {filename}:{linenumber} - "
+    base_string = "{filename}:{linenumber} in function {funcname} - "
     string = "Base documentation error"
 
     def __init__(self, func, argname = None):
@@ -17,7 +17,7 @@ class BaseDocumentationError(object):
     def print_err(self):
         print(self.base_string.format(
                     funcname = self.func.name,
-                    filename = self.func.location.filename,
+                    filename = os.path.basename(self.func.location.filename),
                     linenumber = self.func.location.linenumber),
                end = "")
 
@@ -80,6 +80,5 @@ def find_documentation_errors(filename):
 
         if c_def.returns.typename != "void" and doc.returns is None:
             errors.append(NoReturnError(c_def, None))
-
 
     return errors

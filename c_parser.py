@@ -138,8 +138,6 @@ def clang_parse_file(filename):
 
 def parse_file_functions(filename):
     """Returns a list of parsed Function objects from a given C file"""
-    clang.cindex.Config.set_library_file('/usr/lib/llvm-3.8/lib/libclang.so.1')
-
     stubbed_filename = create_stubbed_file(filename)
 
     root_nodes, _ = clang_parse_file(stubbed_filename)

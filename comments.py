@@ -14,7 +14,7 @@ class _State(enum.Enum):
     COMMENT_NOT_ENCOUNTERED = 6
 
 
-def _find_toplevel_comments(c_lines, comment_format):
+def _find_toplevel_comments(c_lines, comment_format, filename=None):
     """
     Find all top-level Doxygen docstrings in a C file.
 
@@ -44,7 +44,8 @@ def _find_toplevel_comments(c_lines, comment_format):
 
             comments.append(VerbatimComment(comment=comment,
                                             start_loc=start_line,
-                                            end_loc=num+1))
+                                            end_loc=num+1,
+                                            filename=filename))
         else:
             if state == _State.COMMENT_STARTED:
                 comment.append(line)
@@ -65,7 +66,7 @@ def find_toplevel_docstrings(filename, comment_format):
     with open(filename) as f:
         c_lines = f.readlines()
 
-    return _find_toplevel_comments(c_lines, comment_format)
+    return _find_toplevel_comments(c_lines, comment_format, filename)
 
 
 def find_func_docstrings(filename, functions):
@@ -78,10 +79,6 @@ def find_func_docstrings(filename, functions):
 
     doxygen_comments = find_toplevel_docstrings(filename, CommentFormat.Doxygen)
     edt_comments = find_toplevel_docstrings(filename, CommentFormat.EDT)
-
-    for c in edt_comments:
-        if c.start_loc == 284:
-            print(c)
 
     found_docstrings = list()
 

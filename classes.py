@@ -1,9 +1,8 @@
 import enum
 from collections import namedtuple
+import os
 
 from copy import deepcopy
-
-Location = namedtuple("Location", ["filename", "linenumber"])
 
 
 class CommentFormat(enum.Enum):
@@ -15,7 +14,7 @@ class CommentFormat(enum.Enum):
 Represents a comment as written in a C file.
 """
 VerbatimComment = namedtuple("VerbatimComment",
-                             ["start_loc", "end_loc", "comment"])
+                             ["start_loc", "end_loc", "filename", "comment"])
 
 
 class Error(object):
@@ -33,7 +32,7 @@ class Location(object):
         self.linenumber = linenumber
 
     def __str__(self):
-        return "{}:{}".format(self.filename, self.linenumber)
+        return "{}:{}".format(os.path.basename(self.filename), self.linenumber)
 
     def dictify(self):
         return {"filename": self.filename,
@@ -95,7 +94,8 @@ class Function(object):
 
         self.comment = VerbatimComment(comment=["<Placeholder here>"],
                                        start_loc=-1,
-                                       end_loc=-1)
+                                       end_loc=-1,
+                                       filename=None)
 
     def __str__(self):
         string = ""

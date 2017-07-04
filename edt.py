@@ -143,7 +143,7 @@ def _parse_edt_defition_line(line):
     parts = line.split()
 
     if len(parts) != 3:
-        raise ParserError("EDT definition line \"{}\" appears malformed".format(line),
+        raise ParserError("Warning, EDT definition statement \"{}\" appears malformed".format(line),
                 _location)
 
     for i, part in enumerate(parts):
@@ -180,7 +180,19 @@ def _is_reference(lines):
             ]
 
     header_file = re.compile(".* [^. ]*\.h.*")
-    implements_cb = re.compile(".*implements [^ ]*((_cb)|(_fn)|(_func)).*")
+
+    signature_type_regexes = [
+            "([^ ]*_cb[^ ]*)",
+            "([^ ]*_fn[^ ]*)",
+            "([^ ]*_func[^ ]*)",
+            "([^ ]*_type[^ ]*)",
+            "([^ ]*_callback[^ ]*)",
+            ]
+
+    implements_regex = ".*implements ({}).*".format(
+            "|".join(signature_type_regexes))
+
+    implements_regex = re.compile(implements_regex)
 
     # Referencing a header file?
     for line in lines:
@@ -191,7 +203,7 @@ def _is_reference(lines):
 
     # Referencing a callback type?
     for line in lines:
-        if implements_cb.match(line.lower()):
+        if implements_regex.match(line.lower()):
             return True
 
     return False
@@ -206,7 +218,7 @@ def parse_edt(in_lines):
 
     if isinstance(in_lines, VerbatimComment):
         lines = in_lines.comment
-        _location = in_lines.start_loc
+        _location = Location(in_lines.filename, in_lines.start_loc)
     else:
         lines = in_lines
         _location = None
@@ -219,19 +231,19 @@ def parse_edt(in_lines):
 
     for i, line in enumerate(lines[1:]):
         if _location != None:
-            _location += 1
+            _location.linenumber += 1
         if line[0] != '*':
             raise ParserError("Comment line does not start with *",
                 _location)
 
     if lines[-1] != "*/":
         if _location != None:
-            _location += 1
+            _location.linenumber += 1
         raise ParserError("Last line is not */.", _location)
 
     lines = [x[1:].strip() for x in lines[1:-1]]
     if _location != None:
-        _location -= len(lines)
+        _location.linenumber -= len(lines) + 1
 
     # At this point, 'lines' is a list of the lines of text which make up the
     # comment, exlucing all leading '/*', '*', and '*/' tokens.
@@ -248,12 +260,10 @@ def parse_edt(in_lines):
     which_state = _State.INITIAL_COMMENT
     for line in lines:
         if _location != None:
-            _location += 1
+            _location.linenumber += 1
 
         if line.startswith("edt:"):
             if def_line is not None:
-                for line in lines:
-                    print(line)
                 raise ParserError("Multiple EDT definition lines found!",
                         _location)
 
@@ -266,6 +276,11 @@ def parse_edt(in_lines):
         elif line.startswith("Return:"):
             which_state = _State.RETURN
             returns.append(line)
+
+        elif line.startswith("Returns:"):
+            which_state = _State.RETURN
+            returns.append(line)
+            print("Warning, {} says \"Returns:\" instead of \"Return:\"".format(_location))
 
         else:
             if which_state == _State.INITIAL_COMMENT:
