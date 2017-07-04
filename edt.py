@@ -3,6 +3,8 @@
 from __future__ import print_function
 
 from collections import namedtuple
+import enum
+import re
 
 from classes import *
 
@@ -125,73 +127,152 @@ def edt_func(func, edt='edt'):
     return result
 
 
-def parse_edt(edt):
+class _State(enum.Enum):
+    """Parsing state machine states"""
+    INITIAL_COMMENT = 1
+    PARAM = 2
+    RETURN = 3
+
+def _parse_edt_defition_line(line):
+    assert(line.startswith("edt:"))
+
+    line = line[len("edt:"):].strip()
+    parts = line.split()
+
+    if len(parts) != 3:
+        raise AssertionError("EDT definition line \"{}\" appears malformed".format(line))
+
+    for i, part in enumerate(parts):
+        if part == "*":
+            parts[i] = None
+
+    return parts
+
+def _get_varname(line):
+    assert(line.startswith("Argument:"))
+
+    parts = line.split()
+
+    if len(parts) != 2 and len(parts) != 3:
+        raise AssertionError("EDT 'Argument' line \"{}\" appears malformed".format(line))
+
+    return parts[-1]
+
+
+def _is_reference(lines):
+    """
+    Returns True iff the comment lines seem to indicate that the documentation
+    can be found elsewhere.
+    """
+
+    key_phrases = [
+            "function description",
+            "for documentation",
+            "see",
+            "edt in"
+            ]
+
+    header_file = re.compile(".* [^. ]*\.h.*")
+    implements_cb = re.compile(".*implements [^ ]*((_cb)|(_fn)|(_func)).*")
+
+    # Referencing a header file?
+    for line in lines:
+        if header_file.match(line):
+            for phrase in key_phrases:
+                if phrase in line.lower():
+                    return True
+
+    # Referencing a callback type?
+    for line in lines:
+        if implements_cb.match(line.lower()):
+            return True
+
+    return False
+
+
+def parse_edt(in_lines):
     """
     Parses an edt comment into a function class.
     """
-    f = Function()
-    for i,line in enumerate(edt.comment):
-        print(line)
-        if line.startswith(" * edt: "):
-            f.name = line[8:].split()[2]
-        elif line.startswith(" * Return: "):
-            typename = line[11:].strip()
-            f.returns = Variable(typename = typename, name = "<return>")
-        elif line.startswith(" * Argument: "):
-            arg = Variable()
-            arg.name = line[13:].strip()
-            next_line = edt.comment[i+1][2:].strip().split()
-            if next_line[0] == "IN:":
-                arg.inout = "in"
-            elif next_line[0] == "INOUT:":
-                arg.inout = "inout"
-            else:
-                arg.inout = "out"
-            arg.comment = next_line[-1]
-            f.args.append(arg)
+    if isinstance(in_lines, VerbatimComment):
+        lines = in_lines.comment
+    else:
+        lines = in_lines
 
-    return f
+    lines = [line.strip() for line in lines]
+
+    if lines[0] != "/*":
+        raise AssertionError("First line {} is not /*.".format(lines[0]))
+
+    for i, line in enumerate(lines[1:]):
+        if line[0] != '*':
+            raise AssertionError("Line {} does not start with *".format(i))
+
+    if lines[-1] != "*/":
+        raise AssertionError("Last line {} is not */.".format(lines[0]))
+
+    lines = [x[1:].strip() for x in lines[1:-1]]
+
+    # At this point, 'lines' is a list of the lines of text which make up the
+    # comment, exlucing all leading '/*', '*', and '*/' tokens.
+
+    # The first line should always be the definition line, of the form:
+    #  "edt: * * func_name"
+    # Where the asterisks may be some other token
+
+    params = list()
+    returns = list()
+    initial_comment = list()
+    def_line = None
+
+    which_state = _State.INITIAL_COMMENT
+    for line in lines:
+        if line.startswith("edt:"):
+            if def_line is not None:
+                for line in lines:
+                    print(line)
+                raise AssertionError("Multiple EDT definition lines found!")
+
+            def_line = _parse_edt_defition_line(line)
+
+        elif line.startswith("Argument:"):
+            which_state = _State.PARAM
+            params.append(_get_varname(line))
+
+        elif line.startswith("Return:"):
+            which_state = _State.RETURN
+            returns.append(line)
+
+        else:
+            if which_state == _State.INITIAL_COMMENT:
+                initial_comment.append(line)
 
 
-def check_edt(edt):
-    """
-    Checks an edt comment for errors.
+    if _is_reference(initial_comment):
+        result = DummyFunction()
+        if def_line is not None:
+            result.name = def_line[2]
 
-    We use an index, i, to keep track of the part of the edt we're expecting
-    next. The stages are ['edt', 'comment', 'return', 'arguments']
-    """
-    errors = []
-    i = 0
-    for j,line in enumerate(edt):
-        if line.startswith(" * edt: ") and i == 0:
-            # Found edt line
-            i = 1
-        elif line.startswith(" * edt: ") and i != 0:
-            error = Error(j, None, "Unexpected 'edt:' line")
-            errors.append(error)
-        elif line.startswith(" * Return: ") and i == 2:
-            # Found return line
-            i = 3
-        elif line.startswith(" * Return: ") and i != 2:
-            if i == 0:
-                error = Error(j, None, "Missing 'edt:' line.")
-            elif i == 1:
-                error = Error(j, None, "Missing function comment.")
-            else:
-                error = Error(j, None, "Unexpected 'Return:' line.")
-            errors.append(error)
-        elif line.startswith(" * Argument: ") and i == 2:
-            error = Error(j, None, "Missing 'Return:' line.")
-            errors.append(error)
-            i = 3 # So we don't repeat the error.
-        elif line.strip() != "*" and i == 1:
-            # Found the comment between edt line and return line
-            print("Found comment!")
-            print([line])
-            i = 2
+    elif def_line is None:
+        return None
+    else:
+        result = Function()
+        if returns:
+            result.returns = Variable(name="<return>")
+        else:
+            result.returns = None
 
-    return errors
+        result.args = [Variable(name=arg) for arg in params]
+        result.location = None
+        result.name = def_line[2]
+        result.comment = "\n".join(initial_comment).strip()
 
+    if isinstance(in_lines, VerbatimComment):
+        result.docstring = in_lines
+    else:
+        result.docstring = None
+
+    return result
 
 def gen_edt(func):
     return edt_to_comment(edt_func(func))
@@ -293,31 +374,3 @@ if __name__ == '__main__':
     test_edt()
     test_edt_to_comment()
     print('Tests passed.')
-
-
-_ref = """/*
- * edt: * function fry
- *
- *
- * Return: cerrno
- *   Whether we fried the eggs. This line is very, very, very, very, very, very,
- *       very, very long.
- *
- * Argument: frying
- *   IN:     How many to fry.
- *
- * Argument: style
- *   INOUT:  Type of egg.
- */"""
-_ref = _ref.split("\n")
-
-if __name__ == "__main__":
-    errors = check_edt(_ref)
-    if errors:
-        print("Errors found in edt")
-        for e in errors:
-            print(e)
-    else:
-        print("No errors found in edt.")
-        f = parse_edt(_ref)
-        print(f)

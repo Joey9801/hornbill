@@ -37,10 +37,7 @@ def _find_toplevel_comments(c_lines, comment_format):
         if line == comment_start:
             state = _State.COMMENT_STARTED
             start_line = num + 1
-            comment = ['/**']
-            current_comment = VerbatimComment(comment=['/**'],
-                                              start_loc=num+1,
-                                              end_loc=-1)
+            comment = [comment_start]
         elif line == ' */' and state == _State.COMMENT_STARTED:
             state = _State.COMMENT_ENDED
             comment.append(' */')
@@ -72,8 +69,19 @@ def find_toplevel_docstrings(filename, comment_format):
 
 
 def find_func_docstrings(filename, functions):
+    """
+    For each function in the given list of functions, attempts to find the
+    relevant docstring in filename.
+    Returns a zipped object of (function, relevant_docstring), where
+    relevant_docstring is None if no suitable comment could be found
+    """
+
     doxygen_comments = find_toplevel_docstrings(filename, CommentFormat.Doxygen)
     edt_comments = find_toplevel_docstrings(filename, CommentFormat.EDT)
+
+    for c in edt_comments:
+        if c.start_loc == 284:
+            print(c)
 
     found_docstrings = list()
 
@@ -91,14 +99,29 @@ def find_func_docstrings(filename, functions):
         if not found:
             found_docstrings.append(None)
 
-    # Then try to find an EDT comment for any remaining
+    if None not in found_docstrings:
+        return zip(functions, found_docstrings)
+    else:
+        edt_comments = [parse_edt(x) for x in edt_comments]
+
+
+    # Then try to find an EDT comment for any remaining. Most EDT's are linked
+    # to their function by name, but some (eg: ones which say "EDT in blah.h")
+    # must be matched positionally.
     for func, docstring, i in zip(functions, found_docstrings, range(len(functions))):
         if docstring is not None:
             continue
 
-        for docstring in edt_comments:
-            if func_line - 2 <= docstring.end_loc < func_line:
-                found_docstrings[i] = parse_edt(docstring)
-                break
+        func_line = func.location.linenumber
+
+        for edt in edt_comments:
+            if edt is not None:
+                if func.name == edt.name:
+                    found_docstrings[i] = edt
+                    break
+
+                if func_line - 2 <= edt.docstring.end_loc < func_line:
+                    found_docstrings[i] = edt
+                    break
 
     return zip(functions, found_docstrings)

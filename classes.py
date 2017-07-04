@@ -110,6 +110,9 @@ class Function(object):
         return string
 
     def __eq__(self, other):
+        if not isinstance(other, Function):
+            return False
+
         ret = True
         if self.location and other.location:
             if self.location != other.location:
