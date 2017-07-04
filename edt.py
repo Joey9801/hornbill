@@ -142,9 +142,11 @@ def _parse_edt_defition_line(line):
     line = line[len("edt:"):].strip()
     parts = line.split()
 
-    if len(parts) != 3:
+    if len(parts) < 3:
         raise ParserError("Warning, EDT definition statement \"{}\" appears malformed".format(line),
                 _location)
+
+    parts[2] = " ".join(parts[2:])
 
     for i, part in enumerate(parts):
         if part == "*":
@@ -157,9 +159,10 @@ def _get_varname(line):
 
     global _location
 
+    line = line[len("Argument:"):]
     parts = line.split()
 
-    if len(parts) != 2 and len(parts) != 3:
+    if len(parts) != 1 and len(parts) != 2:
         raise ParserError("EDT 'Argument' line \"{}\" appears malformed".format(line),
                 _location)
 
@@ -177,9 +180,10 @@ def _is_reference(lines):
             "for documentation",
             "see",
             "edt in"
+            "edt comments in"
             ]
 
-    header_file = re.compile(".* [^. ]*\.h.*")
+    header_file = re.compile(".* (([^. ]*\.h)|(header file)).*")
 
     signature_type_regexes = [
             "([^ ]*_cb[^ ]*)",
@@ -187,6 +191,7 @@ def _is_reference(lines):
             "([^ ]*_func[^ ]*)",
             "([^ ]*_type[^ ]*)",
             "([^ ]*_callback[^ ]*)",
+            "(event_handler)",
             ]
 
     implements_regex = ".*implements ({}).*".format(
@@ -232,7 +237,7 @@ def parse_edt(in_lines):
     for i, line in enumerate(lines[1:]):
         if _location != None:
             _location.linenumber += 1
-        if line[0] != '*':
+        if len(line) == 0 or line[0] != '*':
             raise ParserError("Comment line does not start with *",
                 _location)
 

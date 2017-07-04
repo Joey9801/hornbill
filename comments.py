@@ -105,6 +105,10 @@ def find_func_docstrings(filename, functions):
             except ParserError as e:
                 edt_comments[i] = None
                 print(e)
+            except Exception as e:
+                edt_comments[i] = None
+                print("Comment {} caused exception {}".format(
+                    verbatim_comment, e))
 
 
     # Then try to find an EDT comment for any remaining. Most EDT's are linked
