@@ -164,6 +164,6 @@ class ParserError():
     def __str__(self):
         string = str(self.problem)
         if self.location is not None:
-            string += ": line " + str(self.location)
+            string = str(self.location) + " - " + string
 
         return string

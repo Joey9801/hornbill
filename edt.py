@@ -280,7 +280,7 @@ def parse_edt(in_lines):
         elif line.startswith("Returns:"):
             which_state = _State.RETURN
             returns.append(line)
-            print("Warning, {} says \"Returns:\" instead of \"Return:\"".format(_location))
+            print("{} - Warning - line says \"Returns:\" instead of \"Return:\"".format(_location))
 
         else:
             if which_state == _State.INITIAL_COMMENT:
